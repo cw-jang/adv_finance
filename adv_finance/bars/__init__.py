@@ -87,7 +87,87 @@ def dollar_bars(df, dv_col, n):
             continue
     
     return df.iloc[idx]
+
+
+@jit(nopython=True)
+def numba_isclose(a,b,rel_tol=1e-09,abs_tol=0.0):
+    return np.fabs(a-b) <= np.fmax(rel_tol*np.fmax(np.fabs(a), np.fabs(b)), abs_tol)
+
+
+@jit(nopython=True)
+def bt(p0, p1, b0): 
+#     if math.isclose((p1-p0), 0.0, abs_tol=0.001): 
+    if numba_isclose((p1-p0), 0.0, abs_tol=0.001):
+        b = b0
+        return b
+    else: 
+        b = np.abs(p1-p0)/(p1-p0)
+        return b
+
+@jit(nopython=True)
+def get_imbalance(t): 
+    bs = np.zeros_like(t)
+    for i in np.arange(1, bs.shape[0]): 
+        t_bt = bt(t[i-1], t[i], bs[i-1])
+        bs[i-1] = t_bt
         
+    return bs[:-1] # remove last value
+
+@jit(nopython=True)
+def test_t_abs(absTheta, t, E_bs): 
+    """
+    Bool function to test inequlity 
+    * row is assumed to come from df.itertuples()
+    - absTheta: float(), row.absTheta
+    - t: pd.Timestamp()
+    - E_bs: float(), row.E_bs
+    """
+    return (absTheta >= t * E_bs)
+
+def agg_imbalance_bars_(df): 
+    """
+    Implements the accumulation logic 
+    원본: 최적화전의 구버전 
+    """
+    start = df.index[0]
+    bars = [] 
+    for row in df.itertuples(): 
+        t_abs = row.absTheta
+        rowIdx = row.Index
+        E_bs = row.E_bs 
+        
+        t = df.loc[start:rowIdx].shape[0]
+        if t < 1: t = 1
+        if test_t_abs(t_abs, t, E_bs): 
+            bars.append((start, rowIdx, t))
+            start = rowIdx
     
+    return bars
+
+
+
+@jit(nopython=True)
+def agg_imb_bars(tm_arr, ts_arr, abs_theta_arr, e_bs_arr): 
+    bars = []
+    start_i = 0
+    last_i = 0
+    last_tm = tm_arr[0]
+    last_ts = ts_arr[1]
+    n_tick = len(tm_arr)
     
-    
+    for i in np.arange(n_tick): 
+        t_abs = abs_theta_arr[i]
+        t_e_bs = e_bs_arr[i]
+        tm = tm_arr[i]
+        
+        if tm > last_tm:
+            last_i = i
+            last_tm = tm 
+            last_ts += ts_arr[i]
+            
+        if test_t_abs(t_abs, last_ts, t_e_bs): 
+            bars.append( (tm_arr[start_i], tm, last_ts) )
+            start_i = i
+            last_ts = ts_arr[i]
+            
+    return bars
