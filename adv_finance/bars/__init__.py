@@ -158,12 +158,12 @@ def agg_imbalance_bars_(df):
 
 
 @jit(nopython=True)
-def agg_imb_bars(tm_arr, ts_arr, abs_theta_arr, e_bs_arr): 
+def agg_imb_bars_jit(tm_arr, ts_arr, abs_theta_arr, e_bs_arr): 
     bars = []
     start_i = 0
     last_i = 0
     last_tm = tm_arr[0]
-    last_ts = ts_arr[1]
+    last_ts = ts_arr[0]
     n_tick = len(tm_arr)
     
     for i in np.arange(n_tick): 
@@ -182,3 +182,16 @@ def agg_imb_bars(tm_arr, ts_arr, abs_theta_arr, e_bs_arr):
             last_ts = ts_arr[i]
             
     return bars
+
+def agg_imb_bars(df): 
+    df_1 = df
+    df_1_ts = df_1.groupby(['TIME'])['E_T'].count()
+    df_1_ts = df_1_ts.rename('ts')
+    df_1_j = pd.merge(df_1, df_1_ts, left_index=True, right_index=True)
+
+    tm_arr = df_1_j.index.values
+    ts_arr = df_1_j['ts'].values
+    abs_theta_arr = df_1_j['absTheta'].values
+    e_bs_arr = df_1_j['E_bs'].values
+    
+    return agg_imb_bars_jit(tm_arr, ts_arr, abs_theta_arr, e_bs_arr)
