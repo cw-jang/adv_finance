@@ -143,7 +143,7 @@ def agg_imbalance_bars_(df):
     """
     start = df.index[0]
     bars = [] 
-    for row in df.itertuples(): 
+    for row in tqdm(df.itertuples(), position=0): 
         t_abs = row.absTheta
         rowIdx = row.Index
         E_bs = row.E_bs 
