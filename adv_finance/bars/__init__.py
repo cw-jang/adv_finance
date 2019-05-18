@@ -130,7 +130,7 @@ def get_imbalance(t):
     bs = np.zeros_like(t)
     last_b = 0
     for i in np.arange(1, bs.shape[0]): 
-        last_b = int(bars.bt(t[i-1], t[i], last_b))
+        last_b = int(bt(t[i-1], t[i], last_b))
         bs[i-1] = last_b
     return bs[:-1] # remove last value
 
