@@ -163,7 +163,7 @@ def agg_imb_bars(tm_arr, ts_arr, abs_theta_arr, e_bs_arr):
     start_i = 0
     last_i = 0
     last_tm = tm_arr[0]
-    last_ts = ts_arr[1]
+    last_ts = ts_arr[0]
     n_tick = len(tm_arr)
     
     for i in np.arange(n_tick): 
