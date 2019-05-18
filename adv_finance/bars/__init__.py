@@ -116,13 +116,22 @@ def bt(p0, p1, b0):
         b = np.abs(p1-p0)/(p1-p0)
         return b
 
+# @jit(nopython=True)
+# def get_imbalance(t): 
+#     bs = np.zeros_like(t)
+#     for i in np.arange(1, bs.shape[0]): 
+#         t_bt = bt(t[i-1], t[i], bs[i-1])
+#         bs[i-1] = t_bt
+        
+#     return bs[:-1] # remove last value
+
 @jit(nopython=True)
 def get_imbalance(t): 
     bs = np.zeros_like(t)
+    last_b = 0
     for i in np.arange(1, bs.shape[0]): 
-        t_bt = bt(t[i-1], t[i], bs[i-1])
-        bs[i-1] = t_bt
-        
+        last_b = int(bars.bt(t[i-1], t[i], last_b))
+        bs[i-1] = last_b
     return bs[:-1] # remove last value
 
 @jit(nopython=True)
@@ -193,5 +202,5 @@ def agg_imb_bars(df):
     ts_arr = df_1_j['ts'].values
     abs_theta_arr = df_1_j['absTheta'].values
     e_bs_arr = df_1_j['E_bs'].values
-    
+
     return agg_imb_bars_jit(tm_arr, ts_arr, abs_theta_arr, e_bs_arr)
