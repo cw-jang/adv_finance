@@ -1,9 +1,11 @@
+import pandas as pd
+import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-plt.style.use('seaborn-talk')
-plt.style.use('bmh')
 
 from numba import jit
+from tqdm import tqdm, tqdm_notebook
+from datetime import datetime
 
 
 @jit(nopython=True)
@@ -23,6 +25,24 @@ def mad_outlier(y, thresh=3.):
 
     modified_z_score = 0.6745 * diff / med_abs_deviation
     return modified_z_score > thresh
+
+
+def dollar_bars(df, dv_col, n): 
+    '''
+    compute dollar bars 
+    '''
+    t = df[dv_col]
+    tick_n = 0
+    idx = []
+    for i, x in enumerate(tqdm(t)): 
+        tick_n += x 
+        if tick_n >= n: 
+            idx.append(i)
+            tick_n = 0
+            continue
+    
+    return df.iloc[idx]
+
 
 
 def select_sample_data(ref, sub, price_col, date): 
@@ -79,21 +99,6 @@ def tick_bars(df, price_col, n):
     return df.iloc[idx]
 
 
-def dollar_bars(df, dv_col, n): 
-    '''
-    compute dollar bars 
-    '''
-    t = df[dv_col]
-    tick_n = 0
-    idx = []
-    for i, x in enumerate(tqdm(t)): 
-        tick_n += x 
-        if tick_n >= n: 
-            idx.append(i)
-            tick_n = 0
-            continue
-    
-    return df.iloc[idx]
 
 
 @jit(nopython=True)
