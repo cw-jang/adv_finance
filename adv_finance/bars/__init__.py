@@ -1,3 +1,8 @@
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+plt.style.use('seaborn-talk')
+plt.style.use('bmh')
+
 from numba import jit
 
 
@@ -20,11 +25,11 @@ def mad_outlier(y, thresh=3.):
     return modified_z_score > thresh
 
 
-
 def select_sample_data(ref, sub, price_col, date): 
     xdf = ref[price_col].loc[date]
     xtdf = sub[price_col].loc[date]
     return xdf, xtdf
+
 
 def plot_sample_data(ref, sub, bar_type, *args, **kwds):
     f,axes=plt.subplots(3,sharex=True, sharey=True, figsize=(10,7))
@@ -41,6 +46,7 @@ def plot_sample_data(ref, sub, bar_type, *args, **kwds):
     
     return
 
+
 def volume_bars(df, volume_col, n): 
     'compute volume bars'
     
@@ -55,6 +61,7 @@ def volume_bars(df, volume_col, n):
             continue
             
     return df.iloc[idx]
+
 
 def tick_bars(df, price_col, n): 
     '''
@@ -143,7 +150,6 @@ def agg_imbalance_bars_(df):
             start = rowIdx
     
     return bars
-
 
 
 @jit(nopython=True)
