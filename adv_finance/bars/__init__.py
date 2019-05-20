@@ -99,33 +99,48 @@ def tick_bars(df, price_col, n):
     return df.iloc[idx]
 
 
-
-
 @jit(nopython=True)
 def numba_isclose(a,b,rel_tol=1e-09,abs_tol=0.0):
     return np.fabs(a-b) <= np.fmax(rel_tol*np.fmax(np.fabs(a), np.fabs(b)), abs_tol)
 
-# @jit(nopython=True)
-# def bt(p0, p1, b0): 
-# #     if math.isclose((p1-p0), 0.0, abs_tol=0.001): 
-#     if numba_isclose((p1-p0), 0.0, abs_tol=0.001):
-#         b = b0
-#         return b
-#     else: 
-#         b = np.abs(p1-p0)/(p1-p0)
-#         return b
-
 @jit(nopython=True)
-def get_imbalance(t): 
-    '''
-    get sign of bar for tick sequence
-    '''
-    bs = np.sign(np.diff(t))
+def get_signed_ticks_jit(t): 
+    bs = t
     bs[0] = 1
     for i in np.arange(1, bs.shape[0]): 
         if numba_isclose(bs[i], 0.0):
             bs[i] = bs[i-1]
     return bs
+    
+
+def get_signed_ticks(prices): 
+    """
+    Applies the tick rule as defined on page 29.
+    
+    : param prices: numpy array of price
+    : return: the singed tick array 
+    
+    """
+    return get_signed_ticks_jit(np.sign(np.diff(prices)))
+
+
+def get_imbalance_ticks(df, metric): 
+    prices = df.PRICE.values
+    signed_ticks = get_signed_ticks(prices)
+    
+    if metric == "tick_imbalance": 
+        imb_ticks = signed_ticks
+    elif metric == "dollar_imbalance": 
+        imb_ticks = signed_ticks * df.DV.values[1:]
+    else: 
+        imb_ticks = signed_ticks * df.V.values[1:]
+    
+    return imb_ticks
+
+
+def agg_imbalance_bars(imb_ticks): 
+    pass 
+
 
 @jit(nopython=True)
 def test_t_abs(absTheta, t, E_bs): 
@@ -138,62 +153,62 @@ def test_t_abs(absTheta, t, E_bs):
     """
     return (absTheta >= t * E_bs)
 
-def agg_imbalance_bars_(df): 
-    """
-    Implements the accumulation logic 
-    원본: 최적화전의 구버전 
-    """
-    start = df.index[0]
-    bars = [] 
-    for row in tqdm(df.itertuples(), position=0): 
-        t_abs = row.absTheta
-        rowIdx = row.Index
-        E_bs = row.E_bs 
+# def agg_imbalance_bars_(df): 
+#     """
+#     Implements the accumulation logic 
+#     원본: 최적화전의 구버전 
+#     """
+#     start = df.index[0]
+#     bars = [] 
+#     for row in tqdm(df.itertuples(), position=0): 
+#         t_abs = row.absTheta
+#         rowIdx = row.Index
+#         E_bs = row.E_bs 
         
-        t = df.loc[start:rowIdx].shape[0]
-        if t < 1: t = 1
-        if test_t_abs(t_abs, t, E_bs): 
-            bars.append((start, rowIdx, t))
-            start = rowIdx
+#         t = df.loc[start:rowIdx].shape[0]
+#         if t < 1: t = 1
+#         if test_t_abs(t_abs, t, E_bs): 
+#             bars.append((start, rowIdx, t))
+#             start = rowIdx
     
-    return bars
+#     return bars
 
 
-@jit(nopython=True)
-def agg_imb_bars_jit(tm_arr, ts_arr, abs_theta_arr, e_bs_arr): 
-    bars = []
-    start_i = 0
-    last_i = 0
-    last_tm = tm_arr[0]
-    last_ts = ts_arr[0]
-    n_tick = len(tm_arr)
+# @jit(nopython=True)
+# def agg_imb_bars_jit(tm_arr, ts_arr, abs_theta_arr, e_bs_arr): 
+#     bars = []
+#     start_i = 0
+#     last_i = 0
+#     last_tm = tm_arr[0]
+#     last_ts = ts_arr[0]
+#     n_tick = len(tm_arr)
     
-    for i in np.arange(n_tick): 
-        t_abs = abs_theta_arr[i]
-        t_e_bs = e_bs_arr[i]
-        tm = tm_arr[i]
+#     for i in np.arange(n_tick): 
+#         t_abs = abs_theta_arr[i]
+#         t_e_bs = e_bs_arr[i]
+#         tm = tm_arr[i]
         
-        if tm > last_tm:
-            last_i = i
-            last_tm = tm 
-            last_ts += ts_arr[i]
+#         if tm > last_tm:
+#             last_i = i
+#             last_tm = tm 
+#             last_ts += ts_arr[i]
             
-        if test_t_abs(t_abs, last_ts, t_e_bs): 
-            bars.append( (tm_arr[start_i], tm, last_ts) )
-            start_i = i
-            last_ts = ts_arr[i]
+#         if test_t_abs(t_abs, last_ts, t_e_bs): 
+#             bars.append( (tm_arr[start_i], tm, last_ts) )
+#             start_i = i
+#             last_ts = ts_arr[i]
             
-    return bars
+#     return bars
 
-def agg_imb_bars(df): 
-    df_1 = df
-    df_1_ts = df_1.groupby(['TIME'])['E_T'].count()
-    df_1_ts = df_1_ts.rename('ts')
-    df_1_j = pd.merge(df_1, df_1_ts, left_index=True, right_index=True)
+# def agg_imb_bars(df): 
+#     df_1 = df
+#     df_1_ts = df_1.groupby(['TIME'])['E_T'].count()
+#     df_1_ts = df_1_ts.rename('ts')
+#     df_1_j = pd.merge(df_1, df_1_ts, left_index=True, right_index=True)
 
-    tm_arr = df_1_j.index.values
-    ts_arr = df_1_j['ts'].values
-    abs_theta_arr = df_1_j['absTheta'].values
-    e_bs_arr = df_1_j['E_bs'].values
+#     tm_arr = df_1_j.index.values
+#     ts_arr = df_1_j['ts'].values
+#     abs_theta_arr = df_1_j['absTheta'].values
+#     e_bs_arr = df_1_j['E_bs'].values
 
-    return agg_imb_bars_jit(tm_arr, ts_arr, abs_theta_arr, e_bs_arr)
+#     return agg_imb_bars_jit(tm_arr, ts_arr, abs_theta_arr, e_bs_arr)
