@@ -56,7 +56,6 @@ class ImbalanceBars:
 
 
     def _get_imbalance_ticks(self, df):
-        # prices = self.df.PRICE.values
         signed_ticks = self._get_signed_ticks(df.PRICE.values)
 
         if self.metric == "tick_imbalance":
@@ -149,7 +148,9 @@ class ImbalanceBars:
                 self.n_ticks_bar.append(cum_ticks)
                 self.exp_n_ticks = ewma(np.array(self.n_ticks_bar[-self.n_prev_bars:], dtype=float), self.n_prev_bars)[-1]
                 # n_prev_ticks = np.sum(self.n_ticks_bar[-self.n_prev_bars:])
-                expected_imbalance = self._get_expected_imbalance(self.exp_n_ticks * self.n_prev_bars, imb_arr)
+                n_prev_bars = min(len(list_bars), self.n_prev_bars)
+                expected_imbalance = self._get_expected_imbalance(self.exp_n_ticks * n_prev_bars, imb_arr)
+                # expected_imbalance = self._get_expected_imbalance(self.exp_n_ticks * self.n_prev_bars, imb_arr)
 
                 # Reset counters
                 cum_ticks, cum_vol, cum_theta = 0, 0, 0
