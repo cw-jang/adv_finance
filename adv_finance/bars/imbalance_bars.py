@@ -111,8 +111,9 @@ class ImbalanceBars:
         low_price = min(low_price, open_price)
         close_price = price
         vol = self.cache[-1].cum_vol
+        start_tm = self.cache[0].tm
         
-        list_bars.append([tm, open_price, high_price, low_price, close_price, vol])
+        list_bars.append([tm, open_price, high_price, low_price, close_price, vol, start_tm])
 
 
     def _extract_bars(self, imb_arr, tm_arr, data_arr):
@@ -166,7 +167,7 @@ class ImbalanceBars:
 
         imb_bars = self._extract_bars(imb_arr, tm_arr, data_arr)
 
-        df_bars = pd.DataFrame(imb_bars, columns=['timestamp', 'open', 'high', 'low', 'close', 'vol'])
+        df_bars = pd.DataFrame(imb_bars, columns=['timestamp', 'open', 'high', 'low', 'close', 'vol', 'start'])
         return df_bars
 
 
