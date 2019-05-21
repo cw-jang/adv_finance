@@ -42,7 +42,8 @@ class ImbalanceBars:
         self.exp_n_ticks_init = exp_n_ticks_init
         self.n_ticks_bar = [] # List of number of ticks from prev bars
         self.cache = []
-        self.cache_tuple = namedtuple('CacheData', ['tm', 'price', 'high', 'low', 'cum_ticks', 'cum_vol', 'cum_theta'])
+        self.cache_tuple = namedtuple('CacheData', ['tm', 'price', 'high', 'low', 'cum_ticks', 'cum_vol', 'cum_theta', 'threshold'])
+        self.cache_history = []
 
 
     def _get_signed_ticks(self, prices):
@@ -67,10 +68,11 @@ class ImbalanceBars:
 
         return imb_ticks
 
-    def _update_cache(self, tm, price, low_price, high_price, cum_ticks, cum_vol, cum_theta):
+    def _update_cache(self, tm, price, low_price, high_price, cum_ticks, cum_vol, cum_theta, threshold):
         cache_data = self.cache_tuple(tm=tm, price=price, high=high_price, low=low_price,
-                                      cum_ticks=cum_ticks, cum_vol=cum_vol, cum_theta=cum_theta)
+                                      cum_ticks=cum_ticks, cum_vol=cum_vol, cum_theta=cum_theta, threshold=threshold)
         self.cache.append(cache_data)
+        self.cache_history.append(cache_data)
 
     def _update_counters(self):
 
@@ -137,10 +139,10 @@ class ImbalanceBars:
             cum_vol += vol
             cum_theta += imbalance
 
-            self._update_cache(tm, price, low_price, high_price, cum_ticks, cum_vol, cum_theta)
-
             if not list_bars and np.isnan(expected_imbalance):
                 expected_imbalance = self._get_expected_imbalance(self.exp_n_ticks, imb_arr)
+
+            self._update_cache(tm, price, low_price, high_price, cum_ticks, cum_vol, cum_theta, self.exp_n_ticks * expected_imbalance)
 
             # Check expression for possible bar generation
             if np.abs(cum_theta) > self.exp_n_ticks * np.abs(expected_imbalance):
@@ -157,7 +159,7 @@ class ImbalanceBars:
                 high_price, low_price = -np.inf, np.inf
 
                 self.cache = []
-                self._update_cache(tm, price, low_price, high_price, cum_ticks, cum_vol, cum_theta)
+                self._update_cache(tm, price, low_price, high_price, cum_ticks, cum_vol, cum_theta, self.exp_n_ticks * expected_imbalance)
 
         return list_bars
 
@@ -176,4 +178,6 @@ class ImbalanceBars:
 def get_dollar_imbalance_bar(df, n_prev_bars, exp_n_ticks_init):
     bars = ImbalanceBars("dollar_imbalance", n_prev_bars, exp_n_ticks_init)
     df_bars = bars.batch_run(df)
-    return df_bars
+    df_history = pd.DataFrame(bars.cache_history, columns=['tm', 'price', 'high', 'low', 'cum_ticks', 'cum_vol', 'cum_theta', 'threshold'])
+
+    return df_bars, df_history
