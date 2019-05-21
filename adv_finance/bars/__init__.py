@@ -5,7 +5,11 @@ import matplotlib.pyplot as plt
 
 from numba import jit
 from tqdm import tqdm, tqdm_notebook
+
 from datetime import datetime
+
+from .imbalance_bars import get_dollar_imbalance_bar
+
 
 
 @jit(nopython=True)
@@ -29,7 +33,7 @@ def mad_outlier(y, thresh=3.):
 
 def dollar_bars(df, dv_col, n): 
     '''
-    compute dollar bars 
+    compute dollar bars
     '''
     t = df[dv_col]
     tick_n = 0
@@ -99,108 +103,54 @@ def tick_bars(df, price_col, n):
     return df.iloc[idx]
 
 
-@jit(nopython=True)
-def numba_isclose(a,b,rel_tol=1e-09,abs_tol=0.0):
-    return np.fabs(a-b) <= np.fmax(rel_tol*np.fmax(np.fabs(a), np.fabs(b)), abs_tol)
-
-@jit(nopython=True)
-def get_signed_ticks_jit(t): 
-    bs = t
-    bs[0] = 1
-    for i in np.arange(1, bs.shape[0]): 
-        if numba_isclose(bs[i], 0.0):
-            bs[i] = bs[i-1]
-    return bs
-    
-
-def get_signed_ticks(prices): 
-    """
-    Applies the tick rule as defined on page 29.
-    
-    : param prices: numpy array of price
-    : return: the singed tick array 
-    
-    """
-    return get_signed_ticks_jit(np.sign(np.diff(prices)))
-
-
-def get_imbalance_ticks(df, metric): 
-    prices = df.PRICE.values
-    signed_ticks = get_signed_ticks(prices)
-    
-    if metric == "tick_imbalance": 
-        imb_ticks = signed_ticks
-    elif metric == "dollar_imbalance": 
-        imb_ticks = signed_ticks * df.DV.values[1:]
-    else: 
-        imb_ticks = signed_ticks * df.V.values[1:]
-    
-    return imb_ticks
-
-
-def agg_imbalance_bars(imb_ticks): 
-    pass 
-
-
-@jit(nopython=True)
-def test_t_abs(absTheta, t, E_bs): 
-    """
-    Bool function to test inequlity 
-    * row is assumed to come from df.itertuples()
-    - absTheta: float(), row.absTheta
-    - t: pd.Timestamp()
-    - E_bs: float(), row.E_bs
-    """
-    return (absTheta >= t * E_bs)
-
-# def agg_imbalance_bars_(df): 
+# def agg_imbalance_bars_(df):
 #     """
-#     Implements the accumulation logic 
-#     원본: 최적화전의 구버전 
+#     Implements the accumulation logic
+#     원본: 최적화전의 구버전
 #     """
 #     start = df.index[0]
-#     bars = [] 
-#     for row in tqdm(df.itertuples(), position=0): 
+#     bars = []
+#     for row in tqdm(df.itertuples(), position=0):
 #         t_abs = row.absTheta
 #         rowIdx = row.Index
-#         E_bs = row.E_bs 
-        
+#         E_bs = row.E_bs
+
 #         t = df.loc[start:rowIdx].shape[0]
 #         if t < 1: t = 1
-#         if test_t_abs(t_abs, t, E_bs): 
+#         if test_t_abs(t_abs, t, E_bs):
 #             bars.append((start, rowIdx, t))
 #             start = rowIdx
-    
+
 #     return bars
 
 
 # @jit(nopython=True)
-# def agg_imb_bars_jit(tm_arr, ts_arr, abs_theta_arr, e_bs_arr): 
+# def agg_imb_bars_jit(tm_arr, ts_arr, abs_theta_arr, e_bs_arr):
 #     bars = []
 #     start_i = 0
 #     last_i = 0
 #     last_tm = tm_arr[0]
 #     last_ts = ts_arr[0]
 #     n_tick = len(tm_arr)
-    
-#     for i in np.arange(n_tick): 
+
+#     for i in np.arange(n_tick):
 #         t_abs = abs_theta_arr[i]
 #         t_e_bs = e_bs_arr[i]
 #         tm = tm_arr[i]
-        
+
 #         if tm > last_tm:
 #             last_i = i
-#             last_tm = tm 
+#             last_tm = tm
 #             last_ts += ts_arr[i]
-            
-#         if test_t_abs(t_abs, last_ts, t_e_bs): 
+
+#         if test_t_abs(t_abs, last_ts, t_e_bs):
 #             bars.append( (tm_arr[start_i], tm, last_ts) )
 #             start_i = i
 #             last_ts = ts_arr[i]
-            
+
 #     return bars
 
-# def agg_imb_bars(df): 
+# def agg_imb_bars(df):
 #     df_1 = df
 #     df_1_ts = df_1.groupby(['TIME'])['E_T'].count()
 #     df_1_ts = df_1_ts.rename('ts')
