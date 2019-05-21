@@ -142,7 +142,7 @@ class ImbalanceBars:
             if not list_bars and np.isnan(expected_imbalance):
                 expected_imbalance = self._get_expected_imbalance(self.exp_n_ticks, imb_arr)
 
-            self._update_cache(tm, price, low_price, high_price, cum_ticks, cum_vol, cum_theta, self.exp_n_ticks * expected_imbalance)
+            self._update_cache(tm, price, low_price, high_price, cum_ticks, cum_vol, cum_theta, self.exp_n_ticks * np.abs(expected_imbalance))
 
             # Check expression for possible bar generation
             if np.abs(cum_theta) > self.exp_n_ticks * np.abs(expected_imbalance):
@@ -159,7 +159,7 @@ class ImbalanceBars:
                 high_price, low_price = -np.inf, np.inf
 
                 self.cache = []
-                self._update_cache(tm, price, low_price, high_price, cum_ticks, cum_vol, cum_theta, self.exp_n_ticks * expected_imbalance)
+                self._update_cache(tm, price, low_price, high_price, cum_ticks, cum_vol, cum_theta, self.exp_n_ticks * np.abs(expected_imbalance))
 
         return list_bars
 
