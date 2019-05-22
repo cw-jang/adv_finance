@@ -7,7 +7,7 @@ from adv_finance.bars import base_bars
 
 
 class RunBars:
-    def __init__(self, metric, n_prev_bars, exp_n_ticks_init):
+    def __init__(self, metric, n_prev_bars, exp_n_ticks_init, store_history=False):
 
         self.metric = metric
         self.exp_n_ticks_init = exp_n_ticks_init
@@ -18,9 +18,12 @@ class RunBars:
         self.cache = []
         self.cache_tuple = namedtuple('CacheData',
                                       ['tm', 'price', 'high', 'low', 'cum_ticks', 'cum_vol',
-                                       'cum_theta_buy', 'cum_theta_sell'])
+                                       'cum_theta_buy', 'cum_theta_sell', 'threshold'])
 
         self.exp_buy_proportion, self.exp_sell_proportion = np.nan, np.nan
+
+        self.store_history = store_history
+        self.cache_history = []
 
 
     def _update_counters(self):
@@ -42,12 +45,15 @@ class RunBars:
         return cum_ticks, cum_vol, cum_theta_buy, cum_theta_sell, high_price, low_price
 
 
-    def _update_cache(self, tm, price, low_price, high_price, cum_theta_buy, cum_theta_sell, cum_ticks, cum_vol):
+    def _update_cache(self, tm, price, low_price, high_price, cum_theta_buy, cum_theta_sell, cum_ticks, cum_vol, threshold):
 
         cache_data = self.cache_tuple(tm=tm, price=price, high=high_price, low=low_price,
-                                      cum_ticks=cum_ticks, cum_vol=cum_vol, cum_theta_buy=cum_theta_buy, cum_theta_sell=cum_theta_sell)
+                                      cum_ticks=cum_ticks, cum_vol=cum_vol, cum_theta_buy=cum_theta_buy, cum_theta_sell=cum_theta_sell, threshold=threshold)
 
         self.cache.append(cache_data)
+
+        if self.store_history:
+            self.cache_history.append(cache_data)
 
 
     def _get_expected_imbalance(self, window, imbalance_arr):
@@ -84,10 +90,17 @@ class RunBars:
             cum_ticks += 1
             cum_vol += vol
 
+            # update high/low_price
+            if price > high_price:
+                high_price = price
+
+            if price <= low_price:
+                low_price = price
+
             if imbalance > 0:
                 imbalance_arr['buy'].append(imbalance)
                 imbalance_arr['sell'].append(0.0)
-                cum_theta_buy += 0
+                cum_theta_buy += imbalance
             elif imbalance < 0:
                 imbalance_arr['buy'].append(0.0)
                 imbalance_arr['sell'].append(abs(imbalance))
@@ -97,10 +110,11 @@ class RunBars:
                 self.exp_buy_proportion, self.exp_sell_proportion = self._get_expected_imbalance(
                     self.exp_n_ticks, imbalance_arr)
 
-            self._update_cache(tm, price, low_price, high_price, cum_theta_buy, cum_theta_sell, cum_ticks, cum_vol)
-
             # Check expression for possible bar generation
             max_proportion = max(self.exp_buy_proportion, self.exp_sell_proportion)
+            self._update_cache(tm, price, low_price, high_price, cum_theta_buy, cum_theta_sell, cum_ticks, cum_vol,
+                               self.exp_n_ticks * max_proportion)
+
             if max(cum_theta_buy, cum_theta_sell) > self.exp_n_ticks * max_proportion:
                 base_bars.create_bars(self.cache, tm, price, high_price, low_price, list_bars)
                 self.n_ticks_bar.append(cum_ticks)
@@ -113,7 +127,9 @@ class RunBars:
                 high_price, low_price = -np.inf, np.inf
                 self.cache = []
 
-                self._update_cache(tm, price, low_price, high_price, cum_theta_buy, cum_theta_sell, cum_ticks, cum_vol)
+                max_proportion = max(self.exp_buy_proportion, self.exp_sell_proportion)
+                self._update_cache(tm, price, low_price, high_price, cum_theta_buy, cum_theta_sell, cum_ticks, cum_vol,
+                                   self.exp_n_ticks * max_proportion)
 
         return list_bars
 
@@ -128,8 +144,14 @@ class RunBars:
         return df_bars
 
 
-def get_dollar_run_bars(df, n_prev_bars, exp_n_ticks_init):
+def get_dollar_run_bars(df, n_prev_bars, exp_n_ticks_init, store_history):
 
     bars = RunBars(metric='dollar_run', n_prev_bars=n_prev_bars, exp_n_ticks_init=exp_n_ticks_init)
     df_bars = bars.batch_run(df)
+
+    if store_history:
+        df_history = pd.DataFrame(bars.cache_history, columns=['tm', 'price', 'high', 'low', 'cum_ticks', 'cum_vol',
+                                                               'cum_theta_buy', 'cum_theta_sell', 'threshold'])
+        return df_bars, df_history
+
     return df_bars
