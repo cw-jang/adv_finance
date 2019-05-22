@@ -30,9 +30,9 @@ def get_signed_ticks(prices):
 def get_imbalance_ticks(df, metric):
     signed_ticks = get_signed_ticks(df.PRICE.values)
 
-    if metric == "tick_imbalance":
+    if metric == "tick_imbalance" or metric == "tick_run":
         imb_ticks = signed_ticks
-    elif metric == "dollar_imbalance":
+    elif metric == "dollar_imbalance" or metric == "dollar_run":
         imb_ticks = signed_ticks * df.DV.values[1:]
     else:
         imb_ticks = signed_ticks * df.V.values[1:]

@@ -146,7 +146,7 @@ class RunBars:
 
 def get_dollar_run_bars(df, n_prev_bars, exp_n_ticks_init, store_history):
 
-    bars = RunBars(metric='dollar_run', n_prev_bars=n_prev_bars, exp_n_ticks_init=exp_n_ticks_init)
+    bars = RunBars(metric='dollar_run', n_prev_bars=n_prev_bars, exp_n_ticks_init=exp_n_ticks_init, store_history=store_history)
     df_bars = bars.batch_run(df)
 
     if store_history:
