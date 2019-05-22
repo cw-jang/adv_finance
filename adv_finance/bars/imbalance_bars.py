@@ -127,6 +127,7 @@ class ImbalanceBars:
 
         return list_bars
 
+
     def batch_run(self, df):
         imb_arr = base_bars.get_imbalance_ticks(df, self.metric).astype(float)
         tm_arr = df.index.values[1:]
@@ -138,7 +139,7 @@ class ImbalanceBars:
 
 
 
-def get_dollar_imbalance_bar(df, n_prev_bars, exp_n_ticks_init, store_history=False):
+def get_dollar_imbalance_bars(df, n_prev_bars, exp_n_ticks_init, store_history=False):
     bars = ImbalanceBars("dollar_imbalance", n_prev_bars, exp_n_ticks_init, store_history)
     df_bars = bars.batch_run(df)
 

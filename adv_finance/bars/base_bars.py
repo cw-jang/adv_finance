@@ -38,3 +38,14 @@ def get_imbalance_ticks(df, metric):
         imb_ticks = signed_ticks * df.V.values[1:]
 
     return imb_ticks
+
+
+def create_bars(cache, tm, price, high_price, low_price, list_bars):
+    open_price = cache[0].price
+    high_price = max(high_price, open_price)
+    low_price = min(low_price, open_price)
+    close_price = price
+    vol = cache[-1].cum_vol
+    start_tm = cache[0].tm
+
+    list_bars.append([tm, open_price, high_price, low_price, close_price, vol, start_tm])

@@ -8,8 +8,8 @@ from tqdm import tqdm, tqdm_notebook
 
 from datetime import datetime
 
-from .imbalance_bars import get_dollar_imbalance_bar
-
+from .imbalance_bars import get_dollar_imbalance_bars
+from .run_bars import get_dollar_run_bars
 
 
 @jit(nopython=True)
