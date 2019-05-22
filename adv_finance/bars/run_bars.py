@@ -62,16 +62,21 @@ class RunBars:
             # Waiting for array to fill for ewma
             ewma_window = np.nan
         else:
-            ewma_window = int(min(len(imbalance_arr), window))
+            ewma_window = int(min(len(imbalance_arr['buy']), window))
 
         if np.isnan(ewma_window):
             exp_buy_proportion, exp_sell_proportion = np.nan, np.nan
         else:
             buy_sample = np.array(imbalance_arr['buy'][-ewma_window:], dtype=float)
             sell_sample = np.array(imbalance_arr['sell'][-ewma_window:], dtype=float)
-            buy_and_sell_imb = sum(buy_sample) + sum(sell_sample)
-            exp_buy_proportion = ewma(buy_sample, window=ewma_window)[-1] / buy_and_sell_imb
-            exp_sell_proportion = ewma(sell_sample, window=ewma_window)[-1] / buy_and_sell_imb
+            # buy_and_sell_imb = sum(buy_sample) + sum(sell_sample)
+            # exp_buy_proportion = ewma(buy_sample, window=ewma_window)[-1] / buy_and_sell_imb
+            # exp_sell_proportion = ewma(sell_sample, window=ewma_window)[-1] / buy_and_sell_imb
+
+            exp_buy = ewma(buy_sample, window=ewma_window)[-1]
+            exp_sell = ewma(sell_sample, window=ewma_window)[-1]
+            exp_buy_proportion = exp_buy
+            exp_sell_proportion = exp_sell
 
         return exp_buy_proportion, exp_sell_proportion
 
@@ -107,8 +112,7 @@ class RunBars:
                 cum_theta_sell += abs(imbalance)
 
             if not list_bars and np.isnan(self.exp_buy_proportion):
-                self.exp_buy_proportion, self.exp_sell_proportion = self._get_expected_imbalance(
-                    self.exp_n_ticks, imbalance_arr)
+                self.exp_buy_proportion, self.exp_sell_proportion = self._get_expected_imbalance(self.exp_n_ticks, imbalance_arr)
 
             # Check expression for possible bar generation
             max_proportion = max(self.exp_buy_proportion, self.exp_sell_proportion)
