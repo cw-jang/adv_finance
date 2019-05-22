@@ -27,7 +27,7 @@ class ImbalanceBars:
     2.3.2 Imbalance bars implementation
     """
 
-    def __init__(self, metric, n_prev_bars=3, exp_n_ticks_init=1000):
+    def __init__(self, metric, n_prev_bars=3, exp_n_ticks_init=1000, store_history=False):
         """
         Constructor
 
@@ -43,6 +43,8 @@ class ImbalanceBars:
         self.n_ticks_bar = [] # List of number of ticks from prev bars
         self.cache = []
         self.cache_tuple = namedtuple('CacheData', ['tm', 'price', 'high', 'low', 'cum_ticks', 'cum_vol', 'cum_theta', 'threshold'])
+
+        self.store_history = store_history
         self.cache_history = []
 
 
@@ -72,7 +74,8 @@ class ImbalanceBars:
         cache_data = self.cache_tuple(tm=tm, price=price, high=high_price, low=low_price,
                                       cum_ticks=cum_ticks, cum_vol=cum_vol, cum_theta=cum_theta, threshold=threshold)
         self.cache.append(cache_data)
-        self.cache_history.append(cache_data)
+        if self.store_history:
+            self.cache_history.append(cache_data)
 
     def _update_counters(self):
 
@@ -175,9 +178,12 @@ class ImbalanceBars:
 
 
 
-def get_dollar_imbalance_bar(df, n_prev_bars, exp_n_ticks_init):
-    bars = ImbalanceBars("dollar_imbalance", n_prev_bars, exp_n_ticks_init)
+def get_dollar_imbalance_bar(df, n_prev_bars, exp_n_ticks_init, store_history=False):
+    bars = ImbalanceBars("dollar_imbalance", n_prev_bars, exp_n_ticks_init, store_history)
     df_bars = bars.batch_run(df)
-    df_history = pd.DataFrame(bars.cache_history, columns=['tm', 'price', 'high', 'low', 'cum_ticks', 'cum_vol', 'cum_theta', 'threshold'])
 
-    return df_bars, df_history
+    if store_history:
+        df_history = pd.DataFrame(bars.cache_history, columns=['tm', 'price', 'high', 'low', 'cum_ticks', 'cum_vol', 'cum_theta', 'threshold'])
+        return df_bars, df_history
+
+    return df_bars
