@@ -3,23 +3,9 @@ import numpy as np
 import pandas as pd
 
 from collections import namedtuple
-from numba import jit
+
 from adv_finance.utils import ewma
-
-
-@jit(nopython=True)
-def numba_isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
-    return np.fabs(a - b) <= np.fmax(rel_tol * np.fmax(np.fabs(a), np.fabs(b)), abs_tol)
-
-
-@jit(nopython=True)
-def get_signed_ticks_jit(t):
-    bs = t
-    bs[0] = 1
-    for i in np.arange(1, bs.shape[0]):
-        if numba_isclose(bs[i], 0.0):
-            bs[i] = bs[i - 1]
-    return bs
+from adv_finance.bars import base_bars
 
 
 class ImbalanceBars:
@@ -47,29 +33,6 @@ class ImbalanceBars:
         self.store_history = store_history
         self.cache_history = []
 
-
-    def _get_signed_ticks(self, prices):
-        """
-        Applies the tick rule as defined on page 29.
-
-        : param prices: numpy array of price
-        : return: the singed tick array
-        """
-        return get_signed_ticks_jit(np.sign(np.diff(prices)))
-
-
-    def _get_imbalance_ticks(self, df):
-        signed_ticks = self._get_signed_ticks(df.PRICE.values)
-
-        if self.metric == "tick_imbalance":
-            imb_ticks = signed_ticks
-        elif self.metric == "dollar_imbalance":
-            imb_ticks = signed_ticks * df.DV.values[1:]
-        else:
-            imb_ticks = signed_ticks * df.V.values[1:]
-
-        return imb_ticks
-
     def _update_cache(self, tm, price, low_price, high_price, cum_ticks, cum_vol, cum_theta, threshold):
         cache_data = self.cache_tuple(tm=tm, price=price, high=high_price, low=low_price,
                                       cum_ticks=cum_ticks, cum_vol=cum_vol, cum_theta=cum_theta, threshold=threshold)
@@ -93,6 +56,7 @@ class ImbalanceBars:
             high_price, low_price = -np.inf, np.inf
 
         return cum_ticks, cum_vol, cum_theta, high_price, low_price
+
 
     def _get_expected_imbalance(self, window, imbalance_arr):
 
@@ -152,10 +116,7 @@ class ImbalanceBars:
                 self._create_bars(tm, price, high_price, low_price, list_bars)
                 self.n_ticks_bar.append(cum_ticks)
                 self.exp_n_ticks = ewma(np.array(self.n_ticks_bar[-self.n_prev_bars:], dtype=float), self.n_prev_bars)[-1]
-                # n_prev_ticks = np.sum(self.n_ticks_bar[-self.n_prev_bars:])
-                n_prev_bars = min(len(list_bars), self.n_prev_bars)
                 expected_imbalance = self._get_expected_imbalance(self.exp_n_ticks * n_prev_bars, imb_arr)
-                # expected_imbalance = self._get_expected_imbalance(self.exp_n_ticks * self.n_prev_bars, imb_arr)
 
                 # Reset counters
                 cum_ticks, cum_vol, cum_theta = 0, 0, 0
@@ -167,12 +128,11 @@ class ImbalanceBars:
         return list_bars
 
     def batch_run(self, df):
-        imb_arr = self._get_imbalance_ticks(df).astype(float)
+        imb_arr = base_bars.get_imbalance_ticks(df, self.metric).astype(float)
         tm_arr = df.index.values[1:]
         data_arr = df[['PRICE', 'V']].values[1:]
 
         imb_bars = self._extract_bars(imb_arr, tm_arr, data_arr)
-
         df_bars = pd.DataFrame(imb_bars, columns=['timestamp', 'open', 'high', 'low', 'close', 'vol', 'start'])
         return df_bars
 
