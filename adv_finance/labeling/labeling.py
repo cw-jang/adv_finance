@@ -143,6 +143,96 @@ def get_events(close, t_events, pt_sl, target, min_ret, num_threads, vertical_ba
     return events
 
 
+# Snippet 3.9, pg 55, Question 3.3
+def barrier_touched(out_df):
+    """
+    Snippet 3.9, pg 55, Question 3.3
+    Adjust the getBins function (Snippet 3.7) to return a 0 whenever the vertical barrier is the one touched first.
+
+    Top horizontal barrier: 1
+    Bottom horizontal barrier: -1
+    Vertical barrier: 0
+
+    :param out_df:
+    :return:
+    """
+    store = []
+    for i in np.arange(len(out_df)):
+        date_time = out_df.index[i]
+        ret = out_df.loc[date_time, 'ret']
+        target = out_df.loc[date_time, 'trgt']
+
+        if ret > 0.0 and ret > target:
+            # Top barrier reached
+            store.append(1)
+        elif ret < 0.0 and ret < -target:
+            # Bottom barrier reached
+            store.append(-1)
+        else:
+            # Vertical barrier reached
+            store.append(0)
+
+    out_df['bin'] = store
+    return out_df
+
+
+# Snippet 3.4 -> 3.7, page 51, Labeling for Side & Size with Meta Labels
+def get_bins(triple_barrier_events, close):
+    """
+    Snippet 3.7, page 51, Labeling for Side & Size with Meta Labels
+
+    Compute event's outcome (including side information, if provided).
+    events is a DataFrame where:
+
+    Now the possible values for labels in out['bin'] are {0,1}, as opposed to whether to take the bet or pass,
+    a purely binary prediction. When the predicted label the previous feasible values {-1,0,1}.
+    The ML algorithm will be trained to decide is 1, we can use the probability of this secondary prediction
+    to derive the size of the bet, where the side (sign) of the position has been set by the primary model.
+
+    :param triple_barrier_events: (data frame)
+        - events.index is event's starttime
+        - events['t1'] is event's endtime
+        - events['trgt'] is event's target
+        - events['side'] (optional) implies the algo's position side
+        Case 1: ('side' not in events): bin in (-1,1) <- label by price action
+        Case 2: ('side' in events): bin in (0,1) <- label by pnl (meta-labeling)
+    :param close: (series) close prices
+    :return: (data frame) of meta-labeled events
+    """
+
+    # 1) Align prices with their respective events
+    events_ = triple_barrier_events.dropna(subset=['t1'])
+    prices = events_.index.union(events_['t1'].values)
+    prices = prices.drop_duplicates()
+    prices = close.reindex(prices, method='bfill')
+
+    # 2) Create out DataFrame
+    out_df = pd.DataFrame(index=events_.index)
+
+    # Need to take the log returns, else your results will be skewed for short positions
+    out_df['ret'] = np.log(prices.loc[events_['t1'].values].values) - np.log(prices.loc[events_.index])
+    out_df['trgt'] = events_['trgt']
+
+    # Meta labeling: Events that were correct will have pos returns
+    if 'side' in events_:
+        out_df['ret'] = out_df['ret'] * events_['side'] # meta-labeling
+
+    # Added code: label 0 when vertical barrier reached
+    out_df = barrier_touched(out_df)
+
+    # Meta labeling: label incorrect events with a 0
+    if 'side' in events_:
+        out_df.loc[out_df['ret'] <= 0, 'bin'] = 0
+
+    # Transform the log returns back to normal returns.
+    out_df['ret'] = np.exp(out_df['ret']) - 1
+
+    # Add the side to the output. This is useful for when a meta label model must be fit
+    tb_cols = triple_barrier_events.columns
+    if 'side' in tb_cols:
+        out_df['side'] = triple_barrier_events['side']
+
+    return out_df
 
 
 
