@@ -32,10 +32,10 @@ def cusum_filter(raw_time_series, threshold, timestamps=True):
             s_pos = 0
             t_events.append(i)
 
-        # Return datetimeIndex or list
-        if timestamps:
-            event_timestamps = pd.DatetimeIndex(t_events)
-            return event_timestamps
+    # Return datetimeIndex or list
+    if timestamps:
+        event_timestamps = pd.DatetimeIndex(t_events)
+        return event_timestamps
 
     return t_events
 
