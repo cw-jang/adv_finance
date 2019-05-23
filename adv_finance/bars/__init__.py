@@ -10,6 +10,7 @@ from datetime import datetime
 
 from .imbalance_bars import get_dollar_imbalance_bars
 from .run_bars import get_dollar_run_bars
+from .standard_bars import get_dollar_bars
 
 
 @jit(nopython=True)
@@ -29,24 +30,6 @@ def mad_outlier(y, thresh=3.):
 
     modified_z_score = 0.6745 * diff / med_abs_deviation
     return modified_z_score > thresh
-
-
-def dollar_bars(df, dv_col, n): 
-    '''
-    compute dollar bars
-    '''
-    t = df[dv_col]
-    tick_n = 0
-    idx = []
-    for i, x in enumerate(tqdm(t)): 
-        tick_n += x 
-        if tick_n >= n: 
-            idx.append(i)
-            tick_n = 0
-            continue
-    
-    return df.iloc[idx]
-
 
 
 def select_sample_data(ref, sub, price_col, date): 
@@ -102,63 +85,3 @@ def tick_bars(df, price_col, n):
             continue
     return df.iloc[idx]
 
-
-# def agg_imbalance_bars_(df):
-#     """
-#     Implements the accumulation logic
-#     원본: 최적화전의 구버전
-#     """
-#     start = df.index[0]
-#     bars = []
-#     for row in tqdm(df.itertuples(), position=0):
-#         t_abs = row.absTheta
-#         rowIdx = row.Index
-#         E_bs = row.E_bs
-
-#         t = df.loc[start:rowIdx].shape[0]
-#         if t < 1: t = 1
-#         if test_t_abs(t_abs, t, E_bs):
-#             bars.append((start, rowIdx, t))
-#             start = rowIdx
-
-#     return bars
-
-
-# @jit(nopython=True)
-# def agg_imb_bars_jit(tm_arr, ts_arr, abs_theta_arr, e_bs_arr):
-#     bars = []
-#     start_i = 0
-#     last_i = 0
-#     last_tm = tm_arr[0]
-#     last_ts = ts_arr[0]
-#     n_tick = len(tm_arr)
-
-#     for i in np.arange(n_tick):
-#         t_abs = abs_theta_arr[i]
-#         t_e_bs = e_bs_arr[i]
-#         tm = tm_arr[i]
-
-#         if tm > last_tm:
-#             last_i = i
-#             last_tm = tm
-#             last_ts += ts_arr[i]
-
-#         if test_t_abs(t_abs, last_ts, t_e_bs):
-#             bars.append( (tm_arr[start_i], tm, last_ts) )
-#             start_i = i
-#             last_ts = ts_arr[i]
-
-#     return bars
-
-# def agg_imb_bars(df):
-#     df_1 = df
-#     df_1_ts = df_1.groupby(['TIME'])['E_T'].count()
-#     df_1_ts = df_1_ts.rename('ts')
-#     df_1_j = pd.merge(df_1, df_1_ts, left_index=True, right_index=True)
-
-#     tm_arr = df_1_j.index.values
-#     ts_arr = df_1_j['ts'].values
-#     abs_theta_arr = df_1_j['absTheta'].values
-#     e_bs_arr = df_1_j['E_bs'].values
-
-#     return agg_imb_bars_jit(tm_arr, ts_arr, abs_theta_arr, e_bs_arr)
