@@ -73,16 +73,6 @@ class ImbalanceBars:
 
         return expected_imbalance
 
-    def _create_bars(self, tm, price, high_price, low_price, list_bars):
-        open_price = self.cache[0].price
-        high_price = max(high_price, open_price)
-        low_price = min(low_price, open_price)
-        close_price = price
-        vol = self.cache[-1].cum_vol
-        start_tm = self.cache[0].tm
-        
-        list_bars.append([tm, open_price, high_price, low_price, close_price, vol, start_tm])
-
 
     def _extract_bars(self, imb_arr, tm_arr, data_arr):
         cum_ticks, cum_vol, cum_theta, high_price, low_price = self._update_counters()
@@ -95,12 +85,7 @@ class ImbalanceBars:
             vol = data_arr[i][1]
             imbalance = imb_arr[i]
 
-            # update high/low_price
-            if price > high_price:
-                high_price = price
-
-            if price <= low_price:
-                low_price = price
+            high_price, low_price = base_bars.update_high_low(price, high_price, low_price)
 
             cum_ticks += 1
             cum_vol += vol
@@ -109,21 +94,21 @@ class ImbalanceBars:
             if not list_bars and np.isnan(expected_imbalance):
                 expected_imbalance = self._get_expected_imbalance(self.exp_n_ticks, imb_arr)
 
-            self._update_cache(tm, price, low_price, high_price, cum_ticks, cum_vol, cum_theta, self.exp_n_ticks * np.abs(expected_imbalance))
+            self._update_cache(tm, price, low_price, high_price, cum_ticks, cum_vol, cum_theta, np.abs(self.exp_n_ticks * expected_imbalance))
 
             # Check expression for possible bar generation
             if np.abs(cum_theta) > self.exp_n_ticks * np.abs(expected_imbalance):
-                self._create_bars(tm, price, high_price, low_price, list_bars)
+                base_bars.create_bars(self.cache, tm, price, high_price, low_price, list_bars)
                 self.n_ticks_bar.append(cum_ticks)
                 self.exp_n_ticks = ewma(np.array(self.n_ticks_bar[-self.n_prev_bars:], dtype=float), self.n_prev_bars)[-1]
-                expected_imbalance = self._get_expected_imbalance(self.exp_n_ticks * n_prev_bars, imb_arr)
+                expected_imbalance = self._get_expected_imbalance(self.exp_n_ticks * self.n_prev_bars, imb_arr)
 
                 # Reset counters
                 cum_ticks, cum_vol, cum_theta = 0, 0, 0
                 high_price, low_price = -np.inf, np.inf
 
                 self.cache = []
-                self._update_cache(tm, price, low_price, high_price, cum_ticks, cum_vol, cum_theta, self.exp_n_ticks * np.abs(expected_imbalance))
+                self._update_cache(tm, price, low_price, high_price, cum_ticks, cum_vol, cum_theta, np.abs(self.exp_n_ticks * expected_imbalance))
 
         return list_bars
 

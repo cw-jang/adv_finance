@@ -40,6 +40,15 @@ def get_imbalance_ticks(df, metric):
     return imb_ticks
 
 
+def update_high_low(price, high_price, low_price):
+    if price > high_price:
+        high_price = price
+
+    if price <= low_price:
+        low_price = price
+
+    return high_price, low_price
+
 def create_bars(cache, tm, price, high_price, low_price, list_bars):
     open_price = cache[0].price
     high_price = max(high_price, open_price)
