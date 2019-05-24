@@ -80,7 +80,7 @@ def add_vertical_barrier(t_events, close, num_days=1):
 
 
 # Snippet 3.3 -> 3.6 page 50, Getting the Time of the First Touch, with Meta Labels
-def get_events(close, t_events, pt_sl, target, min_ret, num_threads, vertical_barrier_times=False, side_prediction=None):
+def get_events(close, t_events, pt_sl, target, min_ret, num_threads, vertical_barrier_times=False, side_prediction=None, store_history=False):
     """
     Snippet 3.6 page 50, Getting the Time of the First Touch, with Meta Labels
 
@@ -135,10 +135,19 @@ def get_events(close, t_events, pt_sl, target, min_ret, num_threads, vertical_ba
                         events=events,
                         pt_sl=pt_sl_)
 
+    # TODO: store history
+    # - events: side, t1, trgt
+    # - df0: t1, sl, pt
+    if store_history:
+        barrier_history = events
+
     events['t1'] = df0.dropna(how='all').min(axis=1)    # pd.min ignores nan
 
     if side_prediction is None:
         events = events.drop('side', axis=1)
+
+    if store_history:
+        return events, barrier_history
 
     return events
 

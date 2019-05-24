@@ -69,11 +69,8 @@ class RunBars:
         else:
             buy_sample = np.array(imbalance_sides['buy'][-ewma_window:], dtype=float)
             sell_sample = np.array(imbalance_sides['sell'][-ewma_window:], dtype=float)
-
-            exp_buy = ewma(buy_sample, window=ewma_window)[-1]
-            exp_sell = ewma(sell_sample, window=ewma_window)[-1]
-            exp_buy_proportion = exp_buy
-            exp_sell_proportion = exp_sell
+            exp_buy_proportion = ewma(buy_sample, window=ewma_window)[-1]
+            exp_sell_proportion = ewma(sell_sample, window=ewma_window)[-1]
 
         return exp_buy_proportion, exp_sell_proportion
 
