@@ -139,7 +139,7 @@ def get_events(close, t_events, pt_sl, target, min_ret, num_threads, vertical_ba
     # - events: side, t1, trgt
     # - df0: t1, sl, pt
     if store_history:
-        barrier_history = events
+        barrier_history = events.copy(deep=True)
 
     events['t1'] = df0.dropna(how='all').min(axis=1)    # pd.min ignores nan
 
