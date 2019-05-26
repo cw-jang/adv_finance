@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from adv_finance.utils.multiprocess import mp_pandas_obj
+from adv_finance.multiprocess.multiprocess import mp_pandas_obj
 
 
 # Snippet 3.2, page 45, Triple Barrier Labeling Method
