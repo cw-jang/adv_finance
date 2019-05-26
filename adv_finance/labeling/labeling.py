@@ -23,7 +23,7 @@ def apply_pt_sl_on_t1(close, events, pt_sl, molecule):
 
     # Apply stop loss/profit taking, if it takes place before t1 (end of event)
     events_ = events.loc[molecule]
-    out = events[['t1']].copy(deep=True)
+    out = events_[['t1']].copy(deep=True)
 
     profit_taking_multiple = pt_sl[0]
     stop_loss_multiple = pt_sl[1]
@@ -204,7 +204,8 @@ def get_bins(triple_barrier_events, close):
     events_ = triple_barrier_events.dropna(subset=['t1'])
     prices = events_.index.union(events_['t1'].values)
     prices = prices.drop_duplicates()
-    prices = close.reindex(prices, method='bfill')
+    # prices = close.reindex(prices, method='bfill')
+    prices = close.reindex(prices).bfill()
 
     # 2) Create out DataFrame
     out_df = pd.DataFrame(index=events_.index)
