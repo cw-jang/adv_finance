@@ -47,3 +47,39 @@ def get_num_co_events(timestamps, t1, num_threads=1):
     return mp_pandas_obj(mp_num_co_events, ('molecule', t1.index),
                          num_threads, timestamps=timestamps, t1=t1)
 
+
+def mp_sample_tw(t1, num_co_events, molecule):
+    """
+    Snippet 4.2 (page 62) Estimating The Average Uniqueness Of A Label
+
+    :param timestamps: (Series): Used for assigning weight. Larger value, larger weight e.g, log return
+    :param t1: (Series)
+    :param num_co_events: (Series)
+    :param molecule:
+    :return:
+    """
+
+    # Derive average uniqueness over the event's lifespan
+    weight = pd.Series(index=molecule)
+    for t_in, t_out in t1.loc[weight.index].iteritems():
+        weight.loc[t_in] = (1 / num_co_events.loc[t_in:t_out]).mean()
+
+    return weight.abs()
+
+
+def get_sample_tw(t1, num_co_events, num_threads=1):
+    """
+    Calculate sampling weight with considering some attributes
+
+    :param timestamps:
+    :param t1:
+    :param num_co_events:
+    :param num_threads:
+    :return:
+    """
+
+    weight = mp_pandas_obj(mp_sample_tw, ('molecule', t1.index), num_threads=num_threads,
+                           t1=t1, num_co_events=num_co_events)
+
+    return weight
+

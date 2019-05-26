@@ -1,3 +1,3 @@
 
 
-from adv_finance.sampling.co_events import get_num_co_events
+from adv_finance.sampling.co_events import get_num_co_events, get_sample_tw
