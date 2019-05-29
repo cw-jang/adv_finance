@@ -86,7 +86,7 @@ def report_progress(job_num, num_jobs, time0, task):
 
     # msg = time_stamp + ' ' + str(round(msg[0] * 100, 2)) + '%' + task + ' done after ' + \
     #     str(round(msg[1], 2)) + ' minutes. Remaining ' + str(round(msg[2], 2)) + ' minutes.'
-    msg = f"{time_stamp} {round(msg[0] * 100, 2)} {task} done after {round(msg[1], 2)} minutes. Remaining {round(msg[2], 2)} minutes."
+    msg = f"{time_stamp} {str(round(msg[0] * 100, 2))} {task} done after {str(round(msg[1], 2))} minutes. Remaining {str(round(msg[2], 2))} minutes."
 
     if job_num < num_jobs:
         sys.stderr.write(msg + '\r')
