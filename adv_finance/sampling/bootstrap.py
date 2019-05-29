@@ -16,7 +16,7 @@ def get_ind_matrix(bar_ix, t1, verbose=True):
         n_col = len(t1)
         mat = csr_matrix((n_row, n_col), dtype='b')
 
-        for i, (t0, t1) in tqdm(enumerate(t1.iteritems()), position=True, disable=not verbose):
+        for i, (t0, t1) in tqdm(enumerate(t1.iteritems()), position=0, disable=not verbose):
             mat[t0:t1 + 1, i] = 1
 
     except Exception as e:
@@ -63,7 +63,6 @@ def seq_bootstrap(ind_m, s_length=None, verbose=True):
     m = ind_m.todense()
 
     for i in tqdm(np.arange(s_length), position=0, disable=not verbose):
-    # while len(phi) < s_length:
         m_ = m[:, phi]
         c = m_.sum(axis=1) + 1
         avg_u = get_avg_uniqueness(m, c)
