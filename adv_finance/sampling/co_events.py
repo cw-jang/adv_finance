@@ -13,7 +13,7 @@ def mp_num_co_events(timestamps, t1, molecule):
     +molecule[0] is the date of the first event on which the weight will be computed
     +moldecule[-1] is the date of the last event on which the weight will be computed
 
-    Any event that starts before t1[moleucle].max() impacts the count.
+    Any event that starts before t1[molecule].max() impacts the count.
 
     :param timestamps:
     :param t1:

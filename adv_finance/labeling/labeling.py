@@ -216,7 +216,7 @@ def get_bins(triple_barrier_events, close):
 
     # Meta labeling: Events that were correct will have pos returns
     if 'side' in events_:
-        out_df['ret'] = out_df['ret'] * events_['side'] # meta-labeling
+        out_df['ret'] = out_df['ret'] * events_['side']     # meta-labeling
 
     # Added code: label 0 when vertical barrier reached
     out_df = barrier_touched(out_df)
