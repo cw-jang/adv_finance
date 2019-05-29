@@ -1,7 +1,6 @@
 import numpy as np
 
 from scipy.sparse import csr_matrix
-from tqdm import tqdm
 
 
 def get_ind_matrix(bar_ix, t1):
@@ -17,7 +16,7 @@ def get_ind_matrix(bar_ix, t1):
         n_col = len(t1)
         mat = csr_matrix((n_row, n_col), dtype='b')
 
-        for i, (t0, t1) in tqdm(enumerate(t1.iteritems()), position=0):
+        for i, (t0, t1) in enumerate(t1.iteritems()):
             mat[t0:t1 + 1, i] = 1
 
     except Exception as e:
