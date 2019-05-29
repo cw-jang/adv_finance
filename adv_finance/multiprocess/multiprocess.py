@@ -94,8 +94,6 @@ def report_progress(job_num, num_jobs, time0, task):
         sys.stderr.write(msg + '\n')
 
 
-
-
 # Snippet 20.9.2 pg 312, Example of Asynchronous call to pythons multiprocessing library
 def process_jobs(jobs, task=None, num_threads=24):
     """

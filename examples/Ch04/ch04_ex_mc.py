@@ -26,10 +26,6 @@ def auxMC(num_obs, num_bars, max_h):
     ind_m = sampling.get_ind_matrix(bar_idx, t1)
     phi = sampling.seq_bootstrap(ind_m)
     seq_u = sampling.get_avg_uniqueness(ind_m[:, phi], None).mean()
-
-    # ind_m = get_ind_matrix(bar_idx, t1)
-    # phi = np.random.choice(ind_m.columns, size=ind_m.shape[1])
-    # std_u = get_avg_uniqueness(ind_m[phi]).mean()
     phi = np.random.choice(np.arange(ind_m.shape[1]), size=ind_m.shape[1])
     std_u = sampling.get_avg_uniqueness(ind_m[:, phi], None).mean()
 
@@ -52,7 +48,7 @@ def mainMC(num_obs=10, num_bars=100, max_h=5, num_iters=5, num_threads=1):
 
 if __name__ == "__main__":
     # df = mainMC(numObs=10, numBars=10, numIters=20, numThreads=1)
-    df = mainMC(num_obs=10, num_bars=10, num_iters=5, num_threads=1)
+    df = mainMC(num_obs=10, num_bars=10, num_iters=5, num_threads=2)
 
     print('finished')
 
