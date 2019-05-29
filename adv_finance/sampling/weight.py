@@ -74,3 +74,37 @@ def get_sample_w(t1, num_co_events, close, num_threads=1):
                        t1=t1, num_co_events=num_co_events, close=close)
 
     return wght
+
+
+def get_time_decay(tw, last_w=1., truncate=0, is_exp=False):
+    """
+    Snippet 4.11 (page 70) Implementation Of Time-Decay Factors
+
+    :param tw:
+    :param last_w:
+    :param truncate:
+    :param is_exp:
+    :return:
+    """
+
+    cum_w = tw.sort_index().cumsum()
+    init_w = 1.
+
+    if is_exp:
+        init_w = np.log(init_w)
+
+    if last_w >= 0:
+        if is_exp:
+            last_w = np.log(last_w)
+        slope = (init_w - last_w) / cum_w.iloc[-1]
+    else:
+        slope = init_w / ((last_w + 1) * cum_w.iloc[-1])
+
+    const = init_w - slope * cum_w.iloc[-1]
+    weights = const + slope * cum_w
+
+    if is_exp:
+        weights = np.exp(weights)
+
+    weights[weights < truncate]  = 0
+    return weights

@@ -38,10 +38,15 @@ if __name__ == "__main__":
 
     num_co_events = sampling.get_num_co_events(timestamps=t_barrier_events .index, t1=t_barrier_events ['t1'])
 
+    # Sampling Weights
     out = pd.DataFrame()
     out['tW'] = sampling.get_sample_tw(t1=t_barrier_events['t1'], num_co_events=num_co_events)
-    out['w'] = sampling.get_sample_w(t1=t_barrier_events['t1'], num_co_events=num_co_events, close=close, num_threads=1)
-    out['w'] *= out.shape[0] / out['w'].sum()
+    # out['w'] = sampling.get_sample_w(t1=t_barrier_events['t1'], num_co_events=num_co_events, close=close, num_threads=1)
+    # out['w'] *= out.shape[0] / out['w'].sum()
+
+    # Time decay
+    tw = out['tW'].dropna()
+    decay = sampling.get_time_decay(tw, last_w=.1, is_exp=False)
 
     print("main finished")
 
