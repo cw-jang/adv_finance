@@ -41,8 +41,8 @@ if __name__ == "__main__":
     # Sampling Weights
     out = pd.DataFrame()
     out['tW'] = sampling.get_sample_tw(t1=t_barrier_events['t1'], num_co_events=num_co_events)
-    # out['w'] = sampling.get_sample_w(t1=t_barrier_events['t1'], num_co_events=num_co_events, close=close, num_threads=1)
-    # out['w'] *= out.shape[0] / out['w'].sum()
+    out['w'] = sampling.get_sample_w(t1=t_barrier_events['t1'], num_co_events=num_co_events, close=close, num_threads=1)
+    out['w'] *= out.shape[0] / out['w'].sum()
 
     # Time decay
     tw = out['tW'].dropna()
