@@ -1,6 +1,6 @@
 ## Advances in Financial Machine Learning 
 
-##### 해당 연구 내용을  코스피/코스닥 종목 체결 틱 데이터로 구현 
+해당 연구 내용을  코스피/코스닥 종목 체결 틱 데이터로 구현 
 
 
 <img src="https://s3.ap-northeast-2.amazonaws.com/cwjang.public/adv_finance/afml_cover.png" />
