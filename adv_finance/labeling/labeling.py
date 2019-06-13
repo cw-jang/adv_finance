@@ -234,12 +234,3 @@ def get_bins(triple_barrier_events, close):
         out_df['side'] = triple_barrier_events['side']
 
     return out_df
-
-
-
-
-
-
-
-
-
