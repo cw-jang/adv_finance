@@ -8,6 +8,7 @@ from sklearn.ensemble import BaggingClassifier, RandomForestClassifier
 
 from adv_finance.multiprocess import mp_pandas_obj
 from adv_finance.model_selection import PurgedKFold, cv_score
+from adv_finance.datasets import get_cls_data
 
 
 def get_test_data(n_features=40, n_informative=10, n_redundant=10, n_samples=10000):
@@ -166,7 +167,8 @@ if __name__ == "__main__":
     print('Started')
 
     # test_data 확인
-    X, cont = get_test_data()
+    # X, cont = get_test_data()
+    X, cont = get_cls_data()
     print(X.head())
     print(cont.head())
 
