@@ -6,8 +6,6 @@ from adv_finance.multiprocess import mp_pandas_obj
 from .utils import get_gaussian_betsize
 
 
-
-
 def get_signal(prob, events=None, scale=1, step_size=None, num_classes=2, num_threads=1, **kwargs):
     """ Snippet 10.1 (page 143) From Probabilities To Bet Size
 
@@ -30,14 +28,15 @@ def get_signal(prob, events=None, scale=1, step_size=None, num_classes=2, num_th
     :return: pd.Series
         bet size signal
     """
-    # get siganls from predictions
+    # get signals from predictions
     if prob.shape[0] == 0:
         return pd.Series()
 
     # 1) generate signals from multinomial classification (one-vs-rest, OvR)
-    # signal = (prob - 1. / num_classes) / (prob * (1 - prob))
-    signal = pd.Series(get_gaussian_betsize(prob, num_classes), index=prob.index)
-    if events and 'side' in events:
+    gaussian_betsize = get_gaussian_betsize(prob, num_classes)
+    gaussian_betsize = gaussian_betsize .reshape(-1)
+    signal = pd.Series(gaussian_betsize , index=prob.index)
+    if events is not None and 'side' in events:
         signal = signal * events.loc[signal.index, 'side']
     if step_size is not None:
         signal = discrete_signal(signal, step_size=step_size)
