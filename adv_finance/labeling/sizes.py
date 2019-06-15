@@ -37,7 +37,7 @@ def get_signal(prob, events=None, scale=1, step_size=None, num_classes=2, num_th
     # 1) generate signals from multinomial classification (one-vs-rest, OvR)
     # signal = (prob - 1. / num_classes) / (prob * (1 - prob))
     signal = pd.Series(get_gaussian_betsize(prob, num_classes), index=prob.index)
-    if events and 'sizde' in events:
+    if events and 'side' in events:
         signal = signal * events.loc[signal.index, 'side']
     if step_size is not None:
         signal = discrete_signal(signal, step_size=step_size)
