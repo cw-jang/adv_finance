@@ -176,3 +176,70 @@ class CPKFold(object):
 
     def get_test_combs(self):
         return self._test_combs, self._test_loc
+
+
+def generate_signals(clf,
+                     X,
+                     y,
+                     sample_weight=None,
+                     n_splits=(4, 2),
+                     t1=None,
+                     pct_embargo=0.,
+                     purging=True,
+                     num_threads=1,
+                     **kwargs):
+    """Cross Validation with default purging and embargo
+
+    Params
+    ------
+    X: pd.DataFrame
+    y: pd.Series, optional
+    sample_weight: pd.Series, optional
+        If specified, apply this to bot testing and training
+    n_splits: tuple
+        Combinatorial of (n_splits[0], n_splits[1]). n_splits[1] is the number of test.
+    t1: pd.Series
+        Index and value correspond to the begining and end of information
+    pct_embargo: float, default 0
+        The percentage of applying embargo
+    purging: bool, default True
+        If true, apply purging method
+    num_threads: int, default 1
+        The number of threads for purging
+    kwargs: Parameters for scoring function
+
+    Returns
+    -------
+    result: dict(list)
+        Each element is signal generated from classifier
+    test_times: timestamps
+    """
+    cv_gen = CPKFold(
+        n_splits=n_splits,
+        t1=t1,
+        pct_embargo=pct_embargo,
+        purging=purging,
+        num_threads=num_threads)
+    signals = []
+    for train, test in cv_gen.split(X=X):
+        train_params = dict()
+        test_params = dict()
+        # Sample weight is an optional parameter
+        if sample_weight is not None:
+            train_params['sample_weight'] = sample_weight.iloc[train].values
+            test_params['sample_weight'] = sample_weight.iloc[test].values
+        test_params.update(kwargs)
+        clf_fit = clf.fit(
+            X=X.iloc[train, :].values, y=y.iloc[train].values, **train_params)
+        # Scoring
+        signal = clf_fit.predict_proba(X.iloc[test, :].values)
+        signal = pd.DataFrame(signal, index=X.iloc[test].index)
+        signals.append(signal)
+
+    combs = cv_gen.get_test_combs()
+    result = defaultdict(list)
+    test_times = combs[1]
+    for signal, comb in zip(signals, combs[0]):
+        for i in comb:
+            result[i].append(signal.loc[test_times[i]])
+    return result, test_times
