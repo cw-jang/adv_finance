@@ -52,9 +52,6 @@ def cusum_filter_dynamic(raw_time_series, threshold, timestamps=True):
     # log returns
     diff = np.log(raw_time_series).diff()
 
-    threshold = threshold.reindex(diff.index, method='ffill')
-    threshold = threshold.fillna(method='bfill')
-
     # Get event time stamps for the entire series
     for i in diff.index[1:]:
         try:
@@ -63,14 +60,15 @@ def cusum_filter_dynamic(raw_time_series, threshold, timestamps=True):
             s_pos = max(0.0, pos)
             s_neg = min(0.0, neg)
 
-            h = threshold.loc[i]
+            if i >= threshold.index[0]:
+                h = threshold.loc[i]
 
-            if s_neg < -h:
-                s_neg = 0
-                t_events.append(i)
-            elif s_pos > h:
-                s_pos = 0
-                t_events.append(i)
+                if s_neg < -h:
+                    s_neg = 0
+                    t_events.append(i)
+                elif s_pos > h:
+                    s_pos = 0
+                    t_events.append(i)
 
         except Exception as e:
             print(e)
