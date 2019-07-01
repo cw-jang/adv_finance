@@ -24,7 +24,9 @@ def mp_num_co_events(timestamps, t1, molecule):
     # 1) Find events that span the period [molecule[0], molecule[-1]]
     t1 = t1.fillna(timestamps[-1])  # unclosed events still must impact other weights
     t1 = t1[t1 >= molecule[0]]  # events that end at or after molecule[0]
-    t1 = t1.loc[:t1[molecule].max()]    # events that start at or before t1[molecule].max()
+    t1_end = min(t1[molecule].max(), t1.index[-1])
+    t1 = t1.loc[:t1_end]    # events that start at or before t1[molecule].max()
+    # t1 = t1.loc[:t1[molecule].max()]    # events that start at or before t1[molecule].max()
 
     # 2) Count events spanning a bar
     iloc = timestamps.searchsorted(np.array([t1.index[0], t1.max()]))
